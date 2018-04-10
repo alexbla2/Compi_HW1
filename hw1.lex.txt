@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <string.h>
 void showToken(char* );
 %}
 
@@ -36,21 +37,49 @@ COMPLEXKEY	showToken("COMPLEXKEY");
 ITEM	showToken("ITEM");
 COMMA	showToken("COMMA");
 "!!"{letter}+			showToken("TYPE");
-"#".(newline$|<<EOF>>)	showToken("COMMENT");
+/*"#".(newline$|<<EOF>>)	showToken("COMMENT");*/
 true			showToken("TRUE");
 false			showToken("FALSE");
 ((+|-)?{digit}+) | (0x{hexdig}+) | (0o{octdig}+)	showToken("INTEGER");
 ((+|-)?{digit}*.{digit}*) | ((+|-)?{digit}*.{digit}*e(+|-){digit}+) | ".inf" | ".NaN" 	showToken("REAL");
- TODO showToken("STRING");
+/* TODO showToken("STRING"); */
 {letter}+{(digit)|(letter)}+ 	showToken("VAL");
 "&"{letter}+	showToken("DECLERATION");
 "*"{letter}+	showToken("DEREFERENCE");
-<<EOF>> ;
-whitespace ;
+/*<<EOF>> ;*/
+{whitespace}	;
 
 %%
 
+/*
+int oct2int(char* oct, int len){
+	int temp, num = 0, factor = 1;
+	for(int i=len-1 ; i>1 ; i--){
+		temp = oct[i] - 48;
+		temp *= factor;
+		num += temp;
+		factor *= 8;
+	}
+	return num;
+}
+
+int hex2int(char* oct, int len){
+	int temp, num = 0, factor = 1;
+	for(int i=len-1 ; i>1 ; i--){
+	//check if dig or letter
+		temp = oct[i] - 48;
+		temp *= factor;
+		num += temp;
+		factor *= 16;
+	}
+	return num;
+}
+*/
 void showToken(char* str){
+	if( strcmp(str ,"COMMENT") == 0 ){
+		//cut the newline from comment
+	}	
+		
 	printf("%d %s %s\n", yylineno, str, yytext);
 }	
 
