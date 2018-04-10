@@ -1,1 +1,56 @@
-mfnvjefhvkh
+%{
+#include <stdio.h>
+void showToken(char* );
+%}
+
+%option yylineno
+%option noyywrap
+digit ([0-9])
+letter ([a-zA-Z])
+whitespace ([\t\n ])
+newline 	("\r\n" | "\r" | "\n")
+hexdig 		([0-9a-f])
+octdig 		([0-7])
+STARTSTRUCT "---"
+ENDSTRUCT "..."
+LLIST "["
+RLIST "]"
+LDICT "{"
+RDICT "}"
+KEY ":"
+COMPLEXKEY "?"
+ITEM "-"
+COMMA ","
+
+%%
+
+
+STARTSTRUCT 	showToken("STARTSTRUCT");
+ENDSTRUCT 	showToken("ENDSTRUCT");
+LLIST 	showToken("LLIST");
+RLIST	showToken("RLIST");
+LDICT 	showToken("LDICT");
+RDICT	showToken("RDICT");
+KEY 	showToken("KEY");
+COMPLEXKEY	showToken("COMPLEXKEY");
+ITEM	showToken("ITEM");
+COMMA	showToken("COMMA");
+"!!"{letter}+			showToken("TYPE");
+"#".(newline$|<<EOF>>)	showToken("COMMENT");
+true			showToken("TRUE");
+false			showToken("FALSE");
+((+|-)?{digit}+) | (0x{hexdig}+) | (0o{octdig}+)	showToken("INTEGER");
+((+|-)?{digit}*.{digit}*) | ((+|-)?{digit}*.{digit}*e(+|-){digit}+) | ".inf" | ".NaN" 	showToken("REAL");
+ TODO showToken("STRING");
+{letter}+{(digit)|(letter)}+ 	showToken("VAL");
+"&"{letter}+	showToken("DECLERATION");
+"*"{letter}+	showToken("DEREFERENCE");
+<<EOF>> ;
+whitespace ;
+
+%%
+
+void showToken(char* str){
+	printf("%d %s %s\n", yylineno, str, yytext);
+}	
+
