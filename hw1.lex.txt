@@ -2,6 +2,8 @@
 #include <stdio.h>
 #include <string.h>
 void showToken(char* );
+int oct2int(char* oct, int len);
+int hex2int(char* oct, int len);
 %}
 
 %option yylineno
@@ -11,12 +13,10 @@ digit ([0-9])
 letter ([a-zA-Z])
 alphaNum ([0-9a-zA-Z])
 whitespace ([\t\n ])
-newline 	(\r\n | \r | \n)
+newline 	(\r\n|\r|\n)
 hexdig 		([0-9a-f])
 octdig 		([0-7])
 
-
-%x comment
 
 %%
 
@@ -32,22 +32,23 @@ octdig 		([0-7])
 "-"	    showToken("ITEM");
 ","	    showToken("COMMA");
 "!!"{letter}+			showToken("TYPE");
-"#"[^{newline}\n]* showToken("COMMENT");
+"#"[^\r\n]*{newline}	showToken("COMMENT");
 true			showToken("TRUE");
 false			showToken("FALSE");
 ("+"|"-")?{digit}+|0x{hexdig}+|0o{octdig}+	showToken("INTEGER");
-(("+"|"-")?{digit}*.{digit}*)|(("+"|"-")?{digit}*.{digit}*e("+"|"-"){digit}+)|".inf"|".NaN" 	showToken("REAL");
-{letter}+{alphaNum}+ 	showToken("VAL");
+(("+"|"-")?{digit}*"."{digit}*)|(("+"|"-")?{digit}*"."{digit}*e("+"|"-"){digit}+)|".inf"|".NaN" 	showToken("REAL");
+"'"[^"'"]*"'"	showToken("STRING");
+{letter}+{alphaNum}* 	showToken("VAL");
 "&"{letter}+	showToken("DECLERATION");
 "*"{letter}+	showToken("DEREFERENCE");
-{whitespace}|{newline}	;
-
+{newline}|{whitespace}	;
+.	printf("Error %s\n", yytext); exit(0);
 %%
 
-/*
+
 int oct2int(char* oct, int len){
-	int temp, num = 0, factor = 1;
-	for(int i=len-1 ; i>1 ; i--){
+	int i=len-1 , temp, num = 0, factor = 1;
+	for(; i>1 ; i--){
 		temp = oct[i] - 48;
 		temp *= factor;
 		num += temp;
@@ -58,8 +59,8 @@ int oct2int(char* oct, int len){
 
 int hex2int(char* oct, int len){
 
-	int temp, num = 0, factor = 1;
-	for(int i=len-1 ; i>1 ; i--){
+	int temp, num = 0, factor = 1, i=len-1;
+	for( ; i>1 ; i--){
 	//check if dig or letter
 		if(( 'a' <= oct[i] ) && ( oct[i] <= 'f' ))
 			temp = oct[i] - 87;
@@ -71,12 +72,44 @@ int hex2int(char* oct, int len){
 	}
 	return num;
 }
-*/
+
+
 void showToken(char* str){
+	
 	if( strcmp(str ,"COMMENT") == 0 ){
+		if(yytext[yyleng - 1] == '\n')
+				yytext[yyleng - 1] = '\0';
+	}
+	
+
+	if( strcmp(str ,"INTEGER") == 0 ){
+		if(yytext[0] == '+')
+				yytext += 1;
+				
+		if(yytext[0] == '0' && yytext[1] == 'x'){//hex2int
+			printf("%d %s %d\n", yylineno, str, hex2int(yytext,yyleng));
+			return;
+		}
+		
+		if(yytext[0] == '0' && yytext[1] == 'o'){//oct2int
+			printf("%d %s %d\n", yylineno, str, oct2int(yytext,yyleng));
+			return;
+		}
+		
+		int offset=0, i=0;
+		while(yytext[i++] == '0')
+			offset++;
+			
+		yytext += offset;
+	}
+	/*
+if( strcmp(str ,"COMMENT") == 0 ){
+		//cut the newline from comment
+	}
+if( strcmp(str ,"COMMENT") == 0 ){
 		//cut the newline from comment
 	}	
-		
+*/		
 	printf("%d %s %s\n", yylineno, str, yytext);
 }	
 
