@@ -41,7 +41,6 @@ false			showToken("FALSE");
 "&"{letter}+	showToken("DECLERATION");
 "*"{letter}+	showToken("DEREFERENCE");
 {whitespace}|{newline}	;
-. printf("Error %s\n",yytext);exit(0);
 
 %%
 
