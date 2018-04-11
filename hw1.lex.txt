@@ -6,39 +6,33 @@ void showToken(char* );
 
 %option yylineno
 %option noyywrap
+
 digit ([0-9])
 letter ([a-zA-Z])
 alphaNum ([0-9a-zA-Z])
 whitespace ([\t\n ])
-newline 	("\r\n" | "\r" | "\n")
+newline 	(\r\n | \r | \n)
 hexdig 		([0-9a-f])
 octdig 		([0-7])
-STARTSTRUCT "---"
-ENDSTRUCT "..."
-LLIST "["
-RLIST "]"
-LDICT "{"
-RDICT "}"
-KEY ":"
-COMPLEXKEY "?"
-ITEM "-"
-COMMA ","
+
+
+%x comment
 
 %%
 
 
-STARTSTRUCT 	showToken("STARTSTRUCT");
-ENDSTRUCT 	showToken("ENDSTRUCT");
-LLIST 	showToken("LLIST");
-RLIST	showToken("RLIST");
-LDICT 	showToken("LDICT");
-RDICT	showToken("RDICT");
-KEY 	showToken("KEY");
-COMPLEXKEY	showToken("COMPLEXKEY");
-ITEM	showToken("ITEM");
-COMMA	showToken("COMMA");
+"---" 	showToken("STARTSTRUCT");
+"..." 	showToken("ENDSTRUCT");
+"[" 	showToken("LLIST");
+"]"	    showToken("RLIST");
+"{" 	showToken("LDICT");
+"}"	    showToken("RDICT");
+":" 	showToken("KEY");
+"?"	    showToken("COMPLEXKEY");
+"-"	    showToken("ITEM");
+","	    showToken("COMMA");
 "!!"{letter}+			showToken("TYPE");
-"#".(newline$)	showToken("COMMENT");
+"#"[^{newline}\n]* showToken("COMMENT");
 true			showToken("TRUE");
 false			showToken("FALSE");
 ("+"|"-")?{digit}+|0x{hexdig}+|0o{octdig}+	showToken("INTEGER");
@@ -46,7 +40,8 @@ false			showToken("FALSE");
 {letter}+{alphaNum}+ 	showToken("VAL");
 "&"{letter}+	showToken("DECLERATION");
 "*"{letter}+	showToken("DEREFERENCE");
-{whitespace}	;
+{whitespace}|{newline}	;
+. printf("Error %s\n",yytext);exit(0);
 
 %%
 
