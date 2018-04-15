@@ -17,6 +17,7 @@ newline 	(\r\n|\r|\n)
 hexdig 		([0-9a-f])
 octdig 		([0-7])
 
+%x string escape
 
 %%
 
@@ -41,6 +42,14 @@ false			showToken("FALSE");
 {letter}+{alphaNum}* 	showToken("VAL");
 "&"{letter}+	showToken("DECLERATION");
 "*"{letter}+	showToken("DEREFERENCE");
+\" BEGIN(string);
+<string>"\" BEGIN(escape);
+<escape>("\r")|("\n")|(\r\n) BEGIN(string);
+<escape>\"|a|b|e|f|n|r|t|v|0|0x{hexdig}{2} BEGIN(string);
+<escape>. printf("Error undefined escape sequence %c\n",yytext[yyleng-1]);exit(0);
+<string>\" printToken("STRING",yytext);BEGIN(0);
+<string><<EOF>> printf("Error unclosed string\n");exit(0);
+<<EOF>> ;
 {newline}|{whitespace}	;
 .	printf("Error %s\n", yytext); exit(0);
 %%
