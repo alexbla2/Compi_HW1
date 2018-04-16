@@ -44,11 +44,11 @@ false			showToken("FALSE");
 "*"{letter}+	showToken("DEREFERENCE");
 \" BEGIN(string);
 <string>\\ BEGIN(escape);
-<escape>("\r")|("\n")|(\r\n) BEGIN(string);
-<escape>\"|a|b|e|f|n|r|t|v|0|0x{hexdig}{hexdig} BEGIN(string);
+<escape>\"|a|b|e|f|n|r|t|v|0|x{hexdig}{hexdig} BEGIN(string);
 <escape>. printf("Error undefined escape sequence %c\n",yytext[yyleng-1]);exit(0);
 <string>\" showToken("STRING");BEGIN(0);
 <string><<EOF>> printf("Error unclosed string\n");exit(0);
+<<EOF>> showToken("EOF"); exit(0);
 {newline}|{whitespace}	;
 .	printf("Error %s\n", yytext); exit(0);
 %%
@@ -111,43 +111,40 @@ void showToken(char* str){
 		yytext += offset;
 	}
         if( strcmp(str ,"STRING") == 0 ){
+		
                 if(yytext[0] == '\''){   //string ' stype
                     yytext[yyleng - 1] = '\0';
                     yytext++;
                 }
+				
                 if(yytext[0] == '"'){   //string " stype
+					printf("%d %s ", yylineno, str);
                     yytext++;
                     int i=0;
-                    printf("%d %s ", yylineno, str);
                     while(i!=yyleng-1){
                         if(yytext[i]=='\\' && i!=0){
                             i++;
-                            char c;
                            switch (yytext[i]){
-                                case '\\':  c=0x5C; break;
-                                case '\"':  c=0x22;  break;
-                                case 'a':  c=0x07; break;
-                                case 'b':  c=0x08;  break;
-                                case 'e':  c=0x1B; break;
-                                case 'f':  c=0x0C;break;
-                                case 'n':  c=0x0A;break;
-                                case 'r':  c=0x0D;break;
-                                case 't':  c=0x09;break;
-                                case 'v':  c=0x0B;break;
-                                case '0':  c=0x00;break;
+                                case '\\':  printf("\\"); break;
+                                case '\"':  printf("\"");  break;
+                                case 'a':  printf("\a"); break;
+                                case 'b':  printf("\b");  break;
+                                case 'e':  printf("\e"); break;
+                                case 'f':  printf("\f");break;
+                                case 'n':  printf("\n");break;
+                                case 'r':  printf("\r");break;
+                                case 't':  printf("\t");break;
+                                case 'v':  printf("\v");break;
+                                case '0':  printf("\0");break;
                                 case 'x':  printf("%d",hex2int(yytext+i+1,2));i+=3; continue;
                            }
-                           printf("%c",c);
-                           i++;
                         }else if((yytext[i]=='\r' && yytext[i+1]=='\n') || yytext[i]=='\n' || yytext[i]=='\r'){
                                 printf(" ");
-                                i++;
-                        
                             }
                         else{
                             printf("%c",yytext[i]);
-                            i++;
                         }
+						i++;
                     }
                     printf("\n");
                     return;
