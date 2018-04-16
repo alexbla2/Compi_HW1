@@ -42,12 +42,7 @@ false			showToken("FALSE");
 {letter}+{alphaNum}* 	showToken("VAL");
 "&"{letter}+	showToken("DECLERATION");
 "*"{letter}+	showToken("DEREFERENCE");
-\" BEGIN(string);
-<string>\\ BEGIN(escape);
-<escape>\"|a|b|e|f|n|r|t|v|0|x{hexdig}{hexdig} BEGIN(string);
-<escape>. printf("Error undefined escape sequence %c\n",yytext[yyleng-1]);exit(0);
-<string>\" showToken("STRING");BEGIN(0);
-<string><<EOF>> printf("Error unclosed string\n");exit(0);
+{\"}[^\"]*{\"}	showToken("STRING");
 <<EOF>> showToken("EOF"); exit(0);
 {newline}|{whitespace}	;
 .	printf("Error %s\n", yytext); exit(0);
@@ -83,8 +78,9 @@ int hex2int(char* oct, int len){
 
 
 void showToken(char* str){
+	printf("%d %s %s\n", yylineno, str, yytext);
 	
-	if( strcmp(str ,"COMMENT") == 0 ){
+	/*if( strcmp(str ,"COMMENT") == 0 ){
 		if(yytext[yyleng - 1] == '\n')
 				yytext[yyleng - 1] = '\0';
 	}
@@ -111,8 +107,8 @@ void showToken(char* str){
 		yytext += offset;
 	}
         
-	if( strcmp(str ,"STRING") == 0 ){
-	
+		if( strcmp(str ,"STRING") == 0 ){
+			
 			if(yytext[0] == '\''){   //string ' stype
 				yytext[yyleng - 1] = '\0';
 				yytext++;
@@ -124,13 +120,13 @@ void showToken(char* str){
 				for( ; i < yyleng-1 ; i++){
 				
 					if( i+1 < yyleng-1 ){
-						if( yytext[i] = '\r' && yytext[i+1] = '\n' ){
+						if( yytext[i] == '\r' && yytext[i+1] == '\n' ){
 							buff[j++] = 32; //space
 							i++;
 						}	
 					}
 					
-					if( yytext[i] = '\n' || yytext[i] = '\r' ){
+					if( yytext[i] == '\n' || yytext[i] == '\r' ){
 						buff[j++] = 32; //space
 					}
 					
@@ -210,5 +206,6 @@ void showToken(char* str){
 	}	
 	
 	printf("%d %s %s\n", yylineno, str, yytext);
+	*/
 }
 
