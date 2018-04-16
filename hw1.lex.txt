@@ -47,7 +47,7 @@ false			showToken("FALSE");
 <escape>("\r")|("\n")|(\r\n) BEGIN(string);
 <escape>\"|a|b|e|f|n|r|t|v|0|0x{hexdig}{hexdig} BEGIN(string);
 <escape>. printf("Error undefined escape sequence %c\n",yytext[yyleng-1]);exit(0);
-<string>\" printToken("STRING",yytext);BEGIN(0);
+<string>\" showToken("STRING");BEGIN(0);
 <string><<EOF>> printf("Error unclosed string\n");exit(0);
 {newline}|{whitespace}	;
 .	printf("Error %s\n", yytext); exit(0);
@@ -111,7 +111,7 @@ void showToken(char* str){
 		yytext += offset;
 	}
         if( strcmp(str ,"STRING") == 0 ){
-                if(yytext[0] == "'"){   //string ' stype
+                if(yytext[0] == '\''){   //string ' stype
                     yytext[yyleng - 1] = '\0';
                     yytext++;
                 }
@@ -120,12 +120,12 @@ void showToken(char* str){
                     int i=0;
                     printf("%d %s ", yylineno, str);
                     while(i!=yyleng-1){
-                        if(yytext[i]=='\' && i!=0){
+                        if(yytext[i]=='\\' && i!=0){
                             i++;
                             char c;
                            switch (yytext[i]){
-                                case '\':  c=0x5C; break;
-                                case '"':  c=0x22;  break;
+                                case '\\':  c=0x5C; break;
+                                case '\"':  c=0x22;  break;
                                 case 'a':  c=0x07; break;
                                 case 'b':  c=0x08;  break;
                                 case 'e':  c=0x1B; break;
@@ -154,5 +154,5 @@ void showToken(char* str){
             }
     }            
 	printf("%d %s %s\n", yylineno, str, yytext);
-}	
+}
 
