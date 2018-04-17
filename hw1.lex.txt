@@ -106,16 +106,16 @@ void showToken(char* str){
 	}
 	
 
-	if( strcmp(str ,"INTEGER") == 0 ){	//integer handler
+	else if( strcmp(str ,"INTEGER") == 0 ){	//integer handler
 		if(yytext[0] == '+' || (yytext[0] == '-' && yytext[1] == '0'))
-				yytext += 1;//yyleng -= 1;?!?!?
+				yytext += 1;
 				
-		if(yytext[0] == '0' && yytext[1] == 'x'){//hex2int
+		else if(yytext[0] == '0' && yytext[1] == 'x'){//hex2int
 			printf("%d %s %d\n", yylineno, str, hex2int(yytext,yyleng));
 			return;
 		}
 		
-		if(yytext[0] == '0' && yytext[1] == 'o'){//oct2int
+		else if(yytext[0] == '0' && yytext[1] == 'o'){//oct2int
 			printf("%d %s %d\n", yylineno, str, oct2int(yytext,yyleng));
 			return;
 		}
@@ -130,7 +130,7 @@ void showToken(char* str){
 		yytext += offset;
 	}
         
-		if( strcmp(str ,"STRING") == 0 ){	////string handler
+	else if( strcmp(str ,"STRING") == 0 ){	////string handler
 			if(yytext[0] == '\''){   		//string ' stype
 				yytext[yyleng - 1] = '\0';
 				yytext++;
