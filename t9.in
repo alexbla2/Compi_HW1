@@ -1,0 +1,2 @@
+&1badDecl
+Declaration can't have a number, so counts as empty decl

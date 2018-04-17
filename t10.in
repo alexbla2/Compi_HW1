@@ -1,0 +1,2 @@
+*1badDeref
+Dereference can't have a number, so counts as empty deref

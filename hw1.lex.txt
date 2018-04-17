@@ -14,7 +14,7 @@ letter ([a-zA-Z])
 alphaNum ([0-9a-zA-Z])
 whitespace ([\t\n ])
 newline 	(\r\n|\r|\n)
-hexdig 		([0-9a-f])
+hexdig 		([0-9a-fA-F])
 octdig 		([0-7])
 
 %x string escape
@@ -37,11 +37,11 @@ octdig 		([0-7])
 \#.* showToken("COMMENT");
 true			showToken("TRUE");
 false			showToken("FALSE");
-("+"|"-")?{digit}+|0x{hexdig}+|0o{octdig}+	showToken("INTEGER");
+("+"|"-")?{digit}+|0x{hexdig}*|0o{octdig}*	showToken("INTEGER");
 (("+"|"-")?{digit}*"."{digit}*)|(("+"|"-")?{digit}*"."{digit}*e("+"|"-"){digit}+)|".inf"|".NaN" 	showToken("REAL");
 "'"[^"'"]*"'"	showToken("STRING");
 {letter}+{alphaNum}* 	showToken("VAL");
-"&"{letter}+	showToken("DECLERATION");
+"&"{letter}+	showToken("DECLARATION");
 "*"{letter}+	showToken("DEREFERENCE");
 
 \" BEGIN(string);yymore();
@@ -77,7 +77,9 @@ int hex2int(char* oct, int len){
 	//check if dig or letter
 		if(( 'a' <= oct[i] ) && ( oct[i] <= 'f' ))
 			temp = oct[i] - 87;
-		else
+		else if(( 'A' <= oct[i] ) && ( oct[i] <= 'F' ))
+			temp = oct[i] - 55;
+			else
 			temp = oct[i] - 48;
 		temp *= factor;
 		num += temp;
@@ -100,7 +102,7 @@ void showToken(char* str){
 
 	if( strcmp(str ,"INTEGER") == 0 ){	//integer handler
 		if(yytext[0] == '+' || (yytext[0] == '-' && yytext[1] == '0'))
-				yytext += 1;
+				yytext += 1;//yyleng -= 1;?!?!?
 				
 		if(yytext[0] == '0' && yytext[1] == 'x'){//hex2int
 			printf("%d %s %d\n", yylineno, str, hex2int(yytext,yyleng));
@@ -113,9 +115,12 @@ void showToken(char* str){
 		}
 		
 		int offset=0, i=0;
-		while(yytext[i++] == '0')
+		while(yytext[i++] == '0'){
 			offset++;
-			
+			if(yytext[i] == '\0')
+				offset--;
+		}
+		
 		yytext += offset;
 	}
         
