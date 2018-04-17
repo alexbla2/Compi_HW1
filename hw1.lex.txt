@@ -33,7 +33,8 @@ octdig 		([0-7])
 "-"	    showToken("ITEM");
 ","	    showToken("COMMA");
 "!!"{letter}+			showToken("TYPE");
-"#"[^\r\n]*{newline}	showToken("COMMENT");
+
+\#.* showToken("COMMENT");
 true			showToken("TRUE");
 false			showToken("FALSE");
 ("+"|"-")?{digit}+|0x{hexdig}+|0o{octdig}+	showToken("INTEGER");
@@ -42,7 +43,16 @@ false			showToken("FALSE");
 {letter}+{alphaNum}* 	showToken("VAL");
 "&"{letter}+	showToken("DECLERATION");
 "*"{letter}+	showToken("DEREFERENCE");
-{\"}[^\"]*{\"}	showToken("STRING");
+
+\" BEGIN(string);yymore();
+<string>\\ BEGIN(escape);yymore();
+<escape>\\|\"|a|b|e|f|n|r|t|v|0|x{hexdig}{hexdig} BEGIN(string);yymore();
+<escape>. printf("Error undefined escape sequence %c\n",yytext[yyleng-1]);exit(0);
+<string>\" showToken("STRING");BEGIN(0);
+<string>{newline} yymore();
+<string>[[:print:]] yymore();
+<string><<EOF>> printf("Error unclosed string\n");exit(0);
+
 <<EOF>> showToken("EOF"); exit(0);
 {newline}|{whitespace}	;
 .	printf("Error %s\n", yytext); exit(0);
@@ -78,16 +88,18 @@ int hex2int(char* oct, int len){
 
 
 void showToken(char* str){
-	printf("%d %s %s\n", yylineno, str, yytext);
 	
-	/*if( strcmp(str ,"COMMENT") == 0 ){
-		if(yytext[yyleng - 1] == '\n')
-				yytext[yyleng - 1] = '\0';
+	if( strcmp(str ,"COMMENT") == 0 ){ //comment handler - adds \0 to the end
+		if(yytext[yyleng - 2] == '\r' ){
+				yytext[yyleng - 2] = '\0';
+		}else if(yytext[yyleng - 1] == '\n' || yytext[yyleng - 1] == '\r'){
+			yytext[yyleng - 1] = '\0';
+		}
 	}
 	
 
-	if( strcmp(str ,"INTEGER") == 0 ){
-		if(yytext[0] == '+')
+	if( strcmp(str ,"INTEGER") == 0 ){	//integer handler
+		if(yytext[0] == '+' || (yytext[0] == '-' && yytext[1] == '0'))
 				yytext += 1;
 				
 		if(yytext[0] == '0' && yytext[1] == 'x'){//hex2int
@@ -107,27 +119,28 @@ void showToken(char* str){
 		yytext += offset;
 	}
         
-		if( strcmp(str ,"STRING") == 0 ){
-			
-			if(yytext[0] == '\''){   //string ' stype
+		if( strcmp(str ,"STRING") == 0 ){	////string handler
+			if(yytext[0] == '\''){   		//string ' stype
 				yytext[yyleng - 1] = '\0';
 				yytext++;
 			}
 			
 			if(yytext[0] == '"'){   //string " stype
-				char* buff = malloc(yyleng*(sizeof(*buff)+1));
+				char* buff=malloc(yyleng*(sizeof(*buff)+1));
 				int i=0, j=0;
 				for( ; i < yyleng-1 ; i++){
 				
 					if( i+1 < yyleng-1 ){
 						if( yytext[i] == '\r' && yytext[i+1] == '\n' ){
-							buff[j++] = 32; //space
+							buff[j++] = ' '; //space
 							i++;
+							continue;
 						}	
 					}
 					
 					if( yytext[i] == '\n' || yytext[i] == '\r' ){
-						buff[j++] = 32; //space
+						buff[j++] = ' '; //space
+						continue;
 					}
 					
 						
@@ -199,13 +212,11 @@ void showToken(char* str){
 					}
 				}
 			buff[j] = '\0';
-			printf("%d %s %s\n", yylineno, str, buff);
+			printf("%d %s %s\n", yylineno, str, buff+1);
 			free(buff);
 			return;
 		}
-	}	
-	
+	}
 	printf("%d %s %s\n", yylineno, str, yytext);
-	*/
 }
 
