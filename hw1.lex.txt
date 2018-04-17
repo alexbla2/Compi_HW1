@@ -17,7 +17,7 @@ newline 	(\r\n|\r|\n)
 hexdig 		([0-9a-fA-F])
 octdig 		([0-7])
 
-%x string escape
+%x string escape smpstring
 
 %%
 
@@ -39,7 +39,12 @@ true			showToken("TRUE");
 false			showToken("FALSE");
 ("+"|"-")?{digit}+|0x{hexdig}*|0o{octdig}*	showToken("INTEGER");
 (("+"|"-")?{digit}*"."{digit}*)|(("+"|"-")?{digit}*"."{digit}*e("+"|"-"){digit}+)|".inf"|".NaN" 	showToken("REAL");
-"'"[^"'"]*"'"	showToken("STRING");
+
+\' BEGIN(smpstring); yymore();
+<smpstring>[^']* yymore();
+<smpstring>\' showToken("STRING");BEGIN(0);
+<smpstring><<EOF>> printf("Error unclosed string\n");exit(0);
+
 {letter}+{alphaNum}* 	showToken("VAL");
 "&"{letter}+	showToken("DECLARATION");
 "*"{letter}+	showToken("DEREFERENCE");
@@ -50,6 +55,7 @@ false			showToken("FALSE");
 <escape>. printf("Error undefined escape sequence %c\n",yytext[yyleng-1]);exit(0);
 <string>\" showToken("STRING");BEGIN(0);
 <string>{newline} yymore();
+<string>{whitespace} yymore();
 <string>[[:print:]] yymore();
 <string><<EOF>> printf("Error unclosed string\n");exit(0);
 
@@ -128,9 +134,7 @@ void showToken(char* str){
 			if(yytext[0] == '\''){   		//string ' stype
 				yytext[yyleng - 1] = '\0';
 				yytext++;
-			}
-			
-			if(yytext[0] == '"'){   //string " stype
+			}else if(yytext[0] == '"'){   //string " stype
 				char* buff=malloc(yyleng*(sizeof(*buff)+1));
 				int i=0, j=0;
 				for( ; i < yyleng-1 ; i++){
@@ -142,78 +146,55 @@ void showToken(char* str){
 							continue;
 						}	
 					}
-					
 					if( yytext[i] == '\n' || yytext[i] == '\r' ){
 						buff[j++] = ' '; //space
 						continue;
 					}
 					
-						
 					if(yytext[i] != '\\' ){
 						buff[j++] = yytext[i];
 					}else{
 						if(yytext[i+1] == '\\'){
 							buff[j++] = 0x5c;
 							i++;
-						}
-						
-						if(yytext[i+1] == '\"'){
+						}else if(yytext[i+1] == '\"'){
 							buff[j++] = 0x22;
 							i++;
-						}
-						
-						if(yytext[i+1] == 'a'){
+						}else if(yytext[i+1] == 'a'){
 							buff[j++] = '\a';
 							i++;
-						}
-						
-						if(yytext[i+1] == 'b'){
+						}else if(yytext[i+1] == 'b'){
 							buff[j++] = '\b';
 							i++;
-						}
-
-						if(yytext[i+1] == 'e'){
+						}else if(yytext[i+1] == 'e'){
 							buff[j++] = '\e';
 							i++;
-						}
-
-						if(yytext[i+1] == 'f'){
+						}else if(yytext[i+1] == 'f'){
 							buff[j++] = '\f';
 							i++;
-						}
-						
-						if(yytext[i+1] == 'n'){
+						}else if(yytext[i+1] == 'n'){
 							buff[j++] = '\n';
 							i++;
-						}
-						
-						if(yytext[i+1] == 'r'){
+						}else if(yytext[i+1] == 'r'){
 							buff[j++] = '\r';
 							i++;
-						}
-
-						if(yytext[i+1] == 't'){
+						}else if(yytext[i+1] == 't'){
 							buff[j++] = '\t';
 							i++;
-						}
-						
-						if(yytext[i+1] == 'v'){
+						}else if(yytext[i+1] == 'v'){
 							buff[j++] = '\v';
 							i++;
-						}
-						
-						if(yytext[i+1] == '0'){
+						}else if(yytext[i+1] == '0'){
 							buff[j++] = '\0';
-							i++;
-						}
-						
-						if(yytext[i+1] == 'x'){
+							break;
+						}else if(yytext[i+1] == 'x'){
 							char convert[4] = {'0' ,'x', yytext[i+2], yytext[i+3]};
 							int decval = hex2int(convert, 4);
+							if(decval == 0)
+								break;
 							buff[j++] = decval;
 							i += 3;
 						}
-						
 					}
 				}
 			buff[j] = '\0';
